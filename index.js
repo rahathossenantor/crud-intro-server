@@ -27,22 +27,47 @@ async function run() {
         const database = client.db("usersDB");
         const userCollection = database.collection("users");
 
+        // get all items
         server.get("/users", async (req, res) => {
             const cursor = userCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         });
 
+        // get specific item by id
+        server.get("/update/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const user = await userCollection.findOne(query);
+            res.send(user);
+        });
+
+        // create new data
         server.post("/users", async (req, res) => {
             const user = req.body;
-            // console.log(user);
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
 
+        // update specific item by id
+        server.put("/users/:id", async (req, res) => {
+            const id = req.params.id;
+            const user = req.body;
+            const filter = {_id: new ObjectId(id)};
+            const options = {upsert: true};
+            const updatedUser = {
+                $set: {
+                    name: user.name,
+                    email: user.email
+                }
+            };
+            const result = await userCollection.updateOne(filter, updatedUser, options);
+            res.send(result);
+        });
+
+        // delete specific item by id
         server.delete("/users/:id", async (req, res) => {
             const id = req.params.id;
-            // console.log(id);
             const query = { _id: new ObjectId(id) };
             const result = await userCollection.deleteOne(query);
             res.send(result);
